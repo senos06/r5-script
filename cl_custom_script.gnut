@@ -1,0 +1,1716 @@
+/*
+ DEV COMMANDS
+-addMenuButtons || Adds all custom buttons to menus (given that they exist)
+
+When: "CLIENT || UI"
+Scripts: [cl_custom_script.gnut]
+
+Character Skin positions: <base, 5144.63 156 14.25>,   <showcase, 5120.02 140 16>
+Base: wiki images
+Showcase: youtube/screenshots
+
+
+LIGHTING DATA: sh_menu_models.gnut, place in the "character_close" lighting config
+usually i replace the final 2 entries with the following, adjust brightness as needed
+	{
+		LightDef data
+		data.origin = <8064, -7150, -8080>
+		data.angles = <0, -90, 0>
+		data.color = <1, 1.03, 1.085>
+		data.brightness = 0.85
+		data.distance = 600.0
+		data.innerCone = 30.0
+		data.outerCone = 30.0
+		data.halfBrightFrac = 0.7
+		data.specularIntensity = 1.0
+		data.emitterRadius = 0
+		data.castShadows = false
+		data.pbrFalloff = false
+		closeCharacterLightDefs.append( data )
+	}
+	{
+		LightDef data
+		data.origin = <8064, -7680, -8080>
+		data.angles = <0, 90, 0>
+		data.color = <1, 1, 1.00>
+		data.brightness = 0.85
+		data.distance = 600.0
+		data.innerCone = 30.0
+		data.outerCone = 30.0
+		data.halfBrightFrac = 0.7
+		data.specularIntensity = 1.0
+		data.emitterRadius = 0
+		data.castShadows = false
+		data.pbrFalloff = false
+		closeCharacterLightDefs.append( data )
+	}
+
+SKIN CHANGER FUNC - PLACE IN sh_menu_models.gnut and globalise it
+usually i put this above the "StartPresentation_PLAY" function
+void function SkinChanger( int cycleType )
+{
+	entity model
+	int skinIdx
+	if ( file.currentPresentationType == ePresentationType.WEAPON_SKIN )
+	{
+		model = ModelData_GetModel( file.customizeWeapon )
+		if ( cycleType == 1 ) // Weapon SkinIndex Up >>>
+		{
+		skinIdx = model.GetSkin()
+		model.SetSkin( skinIdx + 1 )
+		CheckIfSkinIsInRange( model, 1 )
+		}
+		if ( cycleType == 2 ) // Weapon SkinIndex Down <<<
+		{
+		skinIdx = model.GetSkin()
+		model.SetSkin( skinIdx - 1 )
+		CheckIfSkinIsInRange( model, 2 )
+		}
+		if ( cycleType == 3 ) // Weapon SkinIndex Newest
+		{
+		skinIdx = model.GetSkinCount() - 1
+		model.SetSkin( skinIdx )
+		}
+		if ( cycleType == 8 ) // Set camo based on pre-defined variable (weapon)
+		{
+			CheckForRareMask( model )
+			model.SetCamo( CAMO_ID )
+		}
+
+		if ( cycleType == 102 ) // Set camo index down - weapon
+		{
+			CheckForRareMask( model )
+			skinIdx = model.GetCamo()
+			int next = skinIdx -1
+			CheckCamoIndex( next, model, "prev" )
+		}
+
+		if ( cycleType == 103 ) // Set camo index up - weapon
+		{
+			CheckForRareMask( model )
+			skinIdx = model.GetCamo()
+			int next = skinIdx +1
+			CheckCamoIndex( next, model, "next" )
+		}
+	}
+
+	if ( file.currentPresentationType == ePresentationType.CHARACTER_SKIN )
+	{
+		model = ModelData_GetModel( file.customizeCharacter )
+		if ( cycleType == 4 ) // Character SkinIndex Up >>>
+		{
+		skinIdx = model.GetSkin()
+		model.SetSkin( skinIdx + 1 )
+		CheckIfSkinIsInRange( model, 1 )
+		}
+		if ( cycleType == 5 ) // Character SkinIndex Down <<<
+		{
+		skinIdx = model.GetSkin()
+		model.SetSkin( skinIdx - 1 )
+		CheckIfSkinIsInRange( model, 2 )
+		}
+		if ( cycleType == 6 ) // Character SkinIndex Newest
+		{
+		skinIdx = model.GetSkinCount() - 1
+		model.SetSkin( skinIdx )
+		}
+
+		if ( cycleType == 7 ) // Set camo based on pre-defined variable (character)
+		{
+			CheckForRareMask( model )
+			model.SetCamo( CAMO_ID )
+		}
+
+		if ( cycleType == 100 ) // Set camo index down - character
+		{
+			CheckForRareMask( model )
+			skinIdx = model.GetCamo()
+			int next = skinIdx -1
+			CheckCamoIndex( next, model, "prev" )
+		}
+
+		if ( cycleType == 101 ) // Set camo index up - character
+		{
+			CheckForRareMask( model )
+			skinIdx = model.GetCamo()
+			int next = skinIdx +1
+			CheckCamoIndex( next, model, "next" )
+		}
+	}
+
+	if ( cycleType == -1 )
+	{
+		model = ModelData_GetModel( file.customizeCharacter )
+		WaitFrame()
+		model.Hide()
+		wait 6.5
+		model.Show()
+	}
+
+	if ( cycleType == 999 )
+	{
+		model = ModelData_GetModel( file.playCharacter )
+		WaitFrame()
+		model.Hide()
+		wait 5
+		model.Show()
+	}
+}
+*/
+
+#if UI
+global function ToggleUI_CharacterSkins
+global function ToggleUI_Characters
+global function ToggleUI_Weapon
+global function ToggleUI_Store
+global function SpawnDoubleUI
+global function ExecutionShowcaseUI
+global function DiveEmoteUI
+global function CharSelectV2UI
+global function CharacterPOVUI
+global function WeaponPOVUI
+global function ShowSkinInfoUI
+global function OpenGiftUI
+global function LobbyShowcaseUI
+global function ShowHud
+global function IsCommandPassed
+global function SendDebugMessage
+global function LaunchDebugMessage
+global function SkydiveFX_UI
+#endif
+
+#if UI
+global function WSkinUP_UI
+global function WSkinDOWN_UI
+global function WNewestSkin_UI
+global function WCamo_Apply_UI
+global function CSkinUP_UI
+global function CSkinDOWN_UI
+global function CNewestSkin_UI
+global function CCamo_Apply_UI
+global function CCamo_Down_UI
+global function CCamo_Up_UI
+global function WCamo_Down_UI
+global function WCamo_Up_UI
+#endif
+
+#if CLIENT
+global function WeaponSkinIdxUp
+global function WeaponSkinIdxDown
+global function WeaponSkin_GetNewestSkin
+global function WeaponSkin_SetCamo
+global function CharacterSkinIdxUp
+global function CharacterSkinIdxDown
+global function CharacterSkin_GetNewestSkin
+global function CharacterSkin_SetCamo
+global function CharacterSkin_CamoDown
+global function CharacterSkin_CamoUp
+global function WeaponSkin_CamoDown
+global function WeaponSkin_CamoUp
+#endif
+
+global int SENOS_TIMESTAMP = 1684900982 // we use this to change the time in the game, replace all instances of GetUnixTimestamp() with SENOS_TIMESTAMP
+// https://www.epochconverter.com/
+global int CAMO_ID = CAMO_SKIN_COUNT -1
+// grab the camo list from memory, i can explain this further
+
+#if CLIENT
+global function SpawnDoubleThread
+global function DiveEmote
+global function BeginFinisher
+global function CharSelectThread
+global function CharacterPOVThread
+global function WeaponPOVThread
+global function ShowSkinInfoThread
+global function LobbyShowcase
+global function LobbyShowcaseThread
+global function ResetDoF
+global function StartExecutionInLobby
+global function CheckIfSkinIsInRange
+global function UpdateClientLightRig
+global function GetSkin_AndPrintName
+global function UpdateDebugRui
+global function CheckIfCamoIsValid
+global function DubugMessage
+global function CheckForRareMask
+global function CheckCamoIndex
+global function UnlockWeaponRotation
+global function SkydiveFX_Thread
+
+
+
+struct GiftReward // used for the custom reward screen such as showing login rewards, change the rewards on #L1661
+{
+    ItemFlavor flav
+    int quantity
+    int level = 69
+    bool isPremium = true
+    bool isEventReward = false
+    string eventName = "" // these vals dont matter
+}
+
+struct
+{
+    entity keyLight
+    entity fillLight
+    entity rimLightL
+    entity rimLightR // used for Char select lighting, might break some things next update
+
+    asset weaponFlav = $"settings/itemflav/weapon_skin/r301/lgnd_v21_warlord_rt01.rpak" // used for weapon inspect (store menu, press L)
+    asset charmAsset = $"" // used for weapon inspect, if this has something it will show black r99 model with charm i think?
+    entity playerModel //
+    entity victim //        used for execution script
+    entity executionCamera //
+    asset victimFlav = $"settings/itemflav/character_skin/dummie/dummie_black.rpak" // execution script - victim skin get this from legion
+    //////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////
+    asset legendSkin = $"settings/itemflav/character_skin/gibraltar/lgnd_v21_trshunter_rt01.rpak" // used for Character select, execution, lobby showcase, glove showcase, and anything else related to legend skins
+    int skinIndex = 0 // used if you want to manually change the skin of the model, this is done automatically if the legendSkin is already a recolor
+} file
+
+void function StartExecutionInLobby()
+{
+    RunUIScript( "ToggleUI_Characters", null ) // Hide UI
+
+    bool thirdFinisher // Check to see if a character has 3 finishers
+    bool mythicSkin = false // Check to see if a Mythic skin is being used
+
+    ResetDoF() // Reset lobby DoF to get rid of blur
+
+    // Create default camera to load model/textures
+    entity player = GetLocalClientPlayer()
+    entity mover = CreateClientSidePropDynamic( <8064, -7620, -8027>, <20, 90, 0>, $"mdl/dev/empty_model.rmdl" )
+    entity menuCamera = CreateClientSidePointCamera( mover.GetOrigin(), mover.GetAngles(), 45 )
+    player.SetMenuCameraEntityWithAudio( menuCamera )
+
+    // Define character, skin, execution list
+    ItemFlavor skin = GetItemFlavorByAsset( file.legendSkin )
+    ItemFlavor character = CharacterSkin_GetCharacterFlavor( skin )
+    array<ItemFlavor> executions
+
+    UpdateClientLightRig( character, skin ) // Add character select lighting to add more to the scene
+
+    // Create execution list
+    foreach ( ItemFlavor execution in  GetAllItemFlavorsOfType( eItemType.character_execution ) )
+    {
+        if ( CharacterExecution_GetCharacterFlavor( execution ) == character )
+        {
+            executions.append( execution )
+        }
+    }
+
+    // Check if any executions are mythic in list, if so remove them
+    foreach ( index, ItemFlavor executionFlavor in executions )
+    {
+        if ( IsExecutionMythic( executionFlavor ) == true )
+        {
+            executions.remove( index )
+        }
+    }
+
+    // Create and define models
+    asset attackerAnim = CharacterExecution_GetAttackerAnimSeq( executions[0] )
+    asset victimAnim   = CharacterExecution_GetVictimAnimSeq_S( executions[0] )
+    file.playerModel = CreateClientSidePropDynamic( <8034, -7450, -8128>, <0, 270, 0>, CharacterSkin_GetBodyModel( skin ) )
+    file.victim = CreateClientSidePropDynamic( <8094, -7450, -8128>, file.playerModel.GetAngles(), CharacterSkin_GetBodyModel( GetItemFlavorByAsset( file.victimFlav ) ) )
+    
+    // Play menu anims at start, stop these later
+    string anim = "ACT_MP_MENU_LOBBY_SELECT_IDLE"
+    thread PlayAnim( file.playerModel, anim )
+    thread PlayAnim( file.victim, anim )
+
+    // Get skin index
+    int attackerSkin = file.playerModel.GetSkinIndexByName( CharacterSkin_GetSkinName( skin ) )
+    int victimSkin   = file.victim.GetSkinIndexByName( CharacterSkin_GetSkinName( GetItemFlavorByAsset( file.victimFlav ) ) )
+
+    // Set skin index
+    file.playerModel.SetSkin( file.skinIndex )
+    file.victim.SetSkin( victimSkin ) 
+
+    // Check if skin should be applied or reset
+    if ( file.skinIndex == 0 )
+    {
+        CharacterSkin_Apply( file.playerModel, skin )
+        file.playerModel.SetSkin( attackerSkin )
+    }
+
+    // Create execution camera
+    file.executionCamera = CreateClientSidePointCamera( file.playerModel.GetOrigin(), file.playerModel.GetAngles(), 70 )
+    file.executionCamera.SetParent( file.playerModel, "vdu", false, 0 )
+    WaitWithSounds()
+    file.playerModel.Anim_Stop()
+    file.victim.Anim_Stop()
+    ResetPosThread( file.playerModel, file.victim ) // Reset models so anims line up
+    player.SetMenuCameraEntityWithAudio( file.executionCamera ) // Assign active view to new camera
+    WaitFrame()
+
+    // Check if a skin is mythic and to use its finisher
+    if ( ItemFlavor_GetQuality( skin ) == 4 && Mythics_GetSkinTierForCharacter( character, 2 ) == skin )
+    {
+        mythicSkin = true
+        ItemFlavor mythicExecution = Mythics_GetCustomExecutionForCharacterOrSkin( skin )
+        attackerAnim = CharacterExecution_GetAttackerAnimSeq( mythicExecution )
+        victimAnim = CharacterExecution_GetVictimAnimSeq_S( mythicExecution )
+        file.victim.SetOrigin( file.playerModel.GetOrigin() )
+        file.victim.SetAngles( file.playerModel.GetAngles() )
+        PlayExecutionAnims( file.playerModel, file.victim, attackerAnim, victimAnim )
+        WaittillAnimDone( file.playerModel )
+        wait 1
+    }
+
+    // If a skin is not mythic, use regular finishers
+    if ( mythicSkin == false )
+    {
+        int finisherIndex = 0
+        if ( thirdFinisher == false )
+        {
+            // Play the first finisher
+            if ( finisherIndex == 0 )
+            {
+            attackerAnim = CharacterExecution_GetAttackerAnimSeq( executions[0] )
+            victimAnim = CharacterExecution_GetVictimAnimSeq_S( executions[0] )
+            file.victim.SetOrigin( file.playerModel.GetOrigin() )
+            file.victim.SetAngles( file.playerModel.GetAngles() )
+            PlayExecutionAnims( file.playerModel, file.victim, attackerAnim, victimAnim )
+            WaittillAnimDone( file.playerModel )
+            wait 1
+            finisherIndex = 1
+            }
+            // Play the second finisher
+            if ( finisherIndex == 1 )
+            {
+            attackerAnim = CharacterExecution_GetAttackerAnimSeq( executions[1] )
+            victimAnim = CharacterExecution_GetVictimAnimSeq_S( executions[1] )
+            file.victim.SetOrigin( file.playerModel.GetOrigin() )
+            file.victim.SetAngles( file.playerModel.GetAngles() )
+            PlayExecutionAnims( file.playerModel, file.victim, attackerAnim, victimAnim )
+            WaittillAnimDone( file.playerModel )
+            wait 1
+            }
+
+            // Check how many executions a legend has
+            if ( executions.len() <= 2 )
+                thirdFinisher = false
+            
+            else
+                thirdFinisher = true
+        }
+
+        // Play the third finisher if a legend has one
+        if ( thirdFinisher == true )
+        {
+            attackerAnim = CharacterExecution_GetAttackerAnimSeq( executions[2] )
+            victimAnim   = CharacterExecution_GetVictimAnimSeq_S( executions[2] )
+            file.victim.SetOrigin( file.playerModel.GetOrigin() )
+            file.victim.SetAngles( file.playerModel.GetAngles() )
+            PlayExecutionAnims( file.playerModel, file.victim, attackerAnim, victimAnim )
+            WaittillAnimDone( file.playerModel )
+            wait 1
+        }
+    }
+
+    // Remove entities and reset camera to Character Select
+    wait 1
+    file.executionCamera.Destroy()
+    file.playerModel.Destroy()
+    file.victim.Destroy()
+    SetPresentationType( GetLocalClientPlayer(), ePresentationType.CHARACTER_SELECT, false )
+    RunUIScript( "ShowHud", 1 )
+}
+
+void function CharSelectV2() // Creates camera on mover, automatic select anim string, automatic VL selection at random
+{
+    // Hide UI
+    RunUIScript( "ToggleUI_Characters", null )
+
+    // Depth of Field
+    ResetDoF()
+
+    //Define vars
+    string READY_INTRO  = "ACT_MP_MENU_READYUP_INTRO"
+    string READY_IDLE   = "ACT_MP_MENU_READYUP_IDLE"
+    string PICK_AUDIO   = "UI_InGame_FD_TitanSelected"
+    string CEREMONY_REF = "target_loot_ceremony_ref"
+    string ATTACH_STR   = "ref"
+    asset  EMPTY_MODEL  = $"mdl/dev/empty_model.rmdl"
+    bool   hideStuff    = false
+    bool   randomSkin   = false
+
+    // random
+    array<ItemFlavor> ItemRefs
+    foreach ( ItemFlavor ref in GetAllItemFlavorsOfType( eItemType.character_skin ) ) {
+        if ( ItemFlavor_GetQuality( ref ) == 3 ) {
+            if ( CharacterSkin_GetCharacterFlavor( ref ) == CharacterSkin_GetCharacterFlavor( GetItemFlavorByAsset( file.legendSkin ) ) ) {
+                ItemRefs.append( ref )
+            }
+        }
+    }
+
+    //ItemFlavors (for setting smoke/geo model for specific character)
+    ItemFlavor skin   = GetItemFlavorByAsset( ShouldSkinBeRandom( randomSkin, ItemRefs ) )
+    ItemFlavor legend = CharacterSkin_GetCharacterFlavor( skin )
+
+    // Background
+    const asset GEO = $"mdl/levels_terrain/mp_lobby/mp_lobby_bundle_store_bg.rmdl"
+    const asset SMOKE = $"mdl/levels_terrain/mp_lobby/mp_lobby_bundle_store_smoke.rmdl"
+
+    PrecacheModel( GEO )
+    PrecacheModel( SMOKE )
+
+    entity ent_GEO = CreateClientSidePropDynamic( <8064, -7330, -8128>, <0, 90, 0>, EMPTY_MODEL )
+    entity ent_SMOKE = CreateClientSidePropDynamic( <8064, -7330, -8128>, <0, 90, 0>, EMPTY_MODEL )
+
+    int color = 4
+    vector fxCol = GetFXRarityColorForUnlockable( color )
+
+    // Check if background model is empty, if not show the store BG FX
+    if ( hideStuff == false )
+    {
+        int backgroundFx = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( $"P_store_BG_bundle_T5" ), ent_SMOKE.GetOrigin(), ent_SMOKE.GetAngles() )
+        EffectSetControlPointVector( backgroundFx, 1, fxCol )
+
+        ent_GEO.SetModel( GEO )
+        ent_SMOKE.SetModel( SMOKE )
+
+        ent_GEO.SetSkin( color )
+        ent_SMOKE.SetSkin( color )
+
+        ent_GEO.kv.solid = 0
+        ent_GEO.kv.disableshadows = 1
+	    ent_GEO.kv.fadedist = -1
+	    ent_GEO.MakeSafeForUIScriptHack()
+
+	    ent_SMOKE.kv.solid = 0
+	    ent_SMOKE.kv.disableshadows = 1
+	    ent_SMOKE.kv.fadedist = -1
+	    ent_SMOKE.MakeSafeForUIScriptHack()
+    }
+
+    // Camera
+    float fov = 35.5
+    entity player = GetLocalClientPlayer()
+    entity camPos = GetEntByScriptName( CEREMONY_REF )
+    entity CAMERA = CreateClientSidePointCamera( camPos.GetOrigin(), camPos.GetAngles(), fov )
+    entity mover  = CreateClientSidePropDynamic( <8064, -7622, -8027>, <0, 90, 0>, EMPTY_MODEL )
+    CAMERA.SetParent(mover, ATTACH_STR, false, 0)
+    player.SetMenuCameraEntityWithAudio(CAMERA)
+    vector cam = CAMERA.GetOrigin()
+
+    //////////////////////////
+    // CHARACTER NAMEPLATES //
+    //////////////////////////
+    vector backgroundRuiOrigin = cam + (CAMERA.GetForwardVector() * 200) + <31, 0, 0>
+    vector backgroundRuiAngles = <0, 270, 0>
+
+    if ( hideStuff == false )
+    {
+        var backgroundRuiTopo = CreateRUITopology_Worldspace( backgroundRuiOrigin, backgroundRuiAngles * -1, 262, 110 )
+        var backgroundRui = RuiCreate( $"ui/character_select_scrolling_bg.rpak", backgroundRuiTopo, RUI_DRAW_WORLD, 0 )
+
+	    RuiSetString( backgroundRui, "nameString", Localize( ItemFlavor_GetLongName( legend ) ) )
+	    RuiSetString( backgroundRui, "footnoteString", Localize( ItemFlavor_GetShortDescription( legend ) ) )
+    }
+    //////////////////
+    // GAMEMODE RUI //
+    //////////////////
+    var watermarkRui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
+    RuiSetString( watermarkRui, "gameModeString", "@SenosApex" )
+    // RuiSetImage( watermarkRui, "gameModeIcon", $"rui/hud/gametype_icons/survival/dna_station" )
+	RuiSetBool( watermarkRui, "compactTitles", true )
+
+    // Model
+    entity model = CreateClientSidePropDynamic( <8064, -7515, -8075>, <0, 262, 0>, EMPTY_MODEL )
+    CharacterSkin_Apply( model, skin )
+
+    if ( hideStuff == true ) // Remove "@SenosApex" from top left if background is empty
+        RuiSetString( watermarkRui, "gameModeString", "" )
+    
+    // Lighting
+    UpdateClientLightRig( legend, skin )
+
+    // Check if the right skin index is being used
+    if ( file.skinIndex == 0 )
+        CharacterSkin_Apply( model, skin )
+
+    else
+        model.SetSkin( file.skinIndex )
+
+    // Animation
+    wait 2
+	asset CUSTOM_READY_ANIM = CharacterSkin_GetCustomCharSelectReadyIntroAnim( skin )
+	asset CUSTOM_READY_IDLE = CharacterSkin_GetCustomCharSelectReadyIdleAnim( skin )
+
+    // if skin has custom intro anim, play them
+    if ( CUSTOM_READY_ANIM != $"" )
+    {
+        model.Anim_Play( CUSTOM_READY_ANIM )
+
+        if ( hideStuff == true )
+            model.Anim_Play( CUSTOM_READY_IDLE )
+    }
+
+    // if skin has no intro anim play normal anims
+    else if ( CUSTOM_READY_ANIM == $"" )
+    {
+	    model.Anim_Play( READY_INTRO )
+
+        if ( hideStuff == true )
+            model.Anim_Play( READY_IDLE )
+    }
+
+    // Ready-Up Lines
+    array<string> readyUpLines = CharacterClass_GetReadyUpVoicelineEventList( legend )
+
+    if ( hideStuff == false )
+    {
+	    EmitUISound( PICK_AUDIO )
+        wait 0.2
+	    EmitSoundOnEntity( player, readyUpLines.getrandom() )
+    }
+
+    // Idle animation
+    WaittillAnimDone( model )
+    if ( CUSTOM_READY_IDLE != $"" )
+        model.Anim_Play( CUSTOM_READY_IDLE )
+
+    else if ( CUSTOM_READY_IDLE == $"" )
+        model.Anim_Play( READY_IDLE )
+
+    wait 3
+    model.Destroy()
+    CAMERA.Destroy()
+    ent_GEO.Destroy()
+    ent_SMOKE.Destroy()
+    RuiDestroyIfAlive( watermarkRui )
+    SetPresentationType( player, ePresentationType.CHARACTER_SELECT, false )
+    RunUIScript( "ShowHud", 1 )
+}
+
+void function GetSkinInfo( bool ornull debugSkinData ) //Spawns model with ability to set skin //Spawn skin
+{
+    SetPresentationType( GetLocalClientPlayer(), ePresentationType.CHARACTER_SELECT, false ) // i forgor
+    RunUIScript( "ToggleUI_Characters", null ) // hide the ui
+
+    // set the player model
+    ItemFlavor flavor = GetItemFlavorByAsset( file.legendSkin )
+    ItemFlavor legend = GetItemFlavorByAsset( GetGlobalSettingsAsset( ItemFlavor_GetAsset( flavor ), "parentItemFlavor" ) )
+    string skinName = Localize( ItemFlavor_GetLongName( flavor ) ) // get the skin name
+
+    // create the skin info RUI, displays char portrait + skin name
+    var rui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
+    RuiSetString( rui, "gameModeString", skinName )
+    RuiSetImage( rui, "gameModeIcon", GetGlobalSettingsAsset( ItemFlavor_GetAsset( legend ), "icon" ) ) 
+
+    if ( skinName.len() > 45 ) 
+        RuiSetString( rui, "gameModeString", "Unnamed Skin" )
+
+    // i forgor
+    ItemFlavor epic = GetItemFlavorByAsset( $"settings/itemflav/character_skin/ash/epic_01.rpak" )
+    ItemFlavor rare = GetItemFlavorByAsset( $"settings/itemflav/character_skin/ash/rare_01.rpak" )
+
+    // create the mover and model props
+    entity mover = CreateClientsideScriptMover( EMPTY_MODEL, <5120.02, 130, 16>, <0, -90, 0> )
+    entity model = CreateClientSidePropDynamic( <8064, -7610, -8068>, <0, -110, 0>, EMPTY_MODEL )
+
+    // idk why i used this twice, its broken
+    mover.SetOrigin( mover.GetOrigin() + CharacterClass_GetGalleryModelOffset( legend ) )
+
+    // create a camera
+    entity camera = CreateClientSidePointCamera( <5120.02, 0, 56.3>, <0, 90, 0>, 50 )
+
+    //set the right legend skins
+    CharacterSkin_Apply( model, flavor )
+    model.SetParent( mover )
+    model.SetSkin( file.skinIndex )
+
+    // check if we need to recolor the model
+    if ( file.skinIndex == 0 )
+        CharacterSkin_Apply( model, flavor )
+
+    // change model/cam location to the lobby character select area
+    mover.SetOrigin( <3072.02, 78, 0> )
+    mover.SetAngles( <0, -110, 0> )
+    camera.SetOrigin( <3072.02, 0, 56.3> )
+
+    mover.SetOrigin( mover.GetOrigin() + CharacterClass_GetGalleryModelOffset( legend ) ) //idk this is broken, i dont really care
+
+    // get skin data
+    // change this on #L1356
+    var debugInfoRui
+    if ( debugSkinData == true )
+    {
+        thread SkinChanger( -1 )
+        string charName = Localize( ItemFlavor_GetLongName( legend ) )
+        RuiDestroyIfAlive( rui )
+        debugInfoRui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
+        RuiSetString( debugInfoRui, "gameModeString", "GRX Ref:    " + GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "grxRef" ) + "\n\nGUID:    " + ItemFlavor_GetGUID( flavor ) + "\n\nLocalisationKey:    " + GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_NAME" ) + "\n\nQuality:    " + GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "quality" ) + "\n\nItemType:    " + GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "itemType" ) + "\n\nBodymodel:    " + CharacterSkin_GetBodyModel( flavor ) + "\n\nActive Skin Index:    " + model.GetSkin() + "\n\nSkin Name:    " + Localize( GetGlobalSettingsString( ItemFlavor_GetAsset( flavor ), "localizationKey_NAME" ) ) + "\n\nMaterial Name:    " + charName + "_matl_name_" + CharacterSkin_GetSkinName( flavor ) )
+	    //RuiSetBool( debugInfoRui, "compactTitles", true )
+    }
+    // play anims
+    thread PlayAnim( model, "ACT_MP_MENU_LOBBY_SELECT_IDLE", mover )
+
+    // get the player so we can change the current camera
+    entity player = GetLocalClientPlayer()
+    player.SetMenuCameraEntityWithAudio( camera ) // change the camera
+
+    // remove our models/rui when we're done
+    wait 6.5
+    model.Destroy()
+    camera.Destroy()
+    if (debugSkinData==true)
+        RuiDestroyIfAlive( debugInfoRui )
+    RuiDestroyIfAlive( rui )
+    SetPresentationType( player, ePresentationType.CHARACTER_SELECT, false )
+    RunUIScript( "ShowHud", 1 )
+}
+
+void function ShowDebugMessage()
+{
+    // im doing this in a bad manual way, i dont really care
+    // get setFile from legion
+    string assetID = "defaultStartTime"
+    asset setFile = $"settings/itemflav/calevent/season16.rpak"
+
+    string d1 = GetGlobalSettingsString( setFile, assetID )
+
+    RunUIScript( "SendDebugMessage", setFile.tostring(), assetID + " = " + d1 )
+}
+
+bool function CheckIfModelIsValid( entity victim, asset victimAnim )
+{
+
+    // check to see if we need to use the bangalore sibling execution (why create a func for this?)
+    asset anim = $"animseq/humans/class/medium/pilot_medium_bangalore/bangalore_victim_newcastle_execution_sibling.rseq"
+    if ( victimAnim == anim )
+    {
+        thread ChangePlayerModel( victim, victimAnim )
+        return false
+    }
+    return true
+}
+
+void function ChangePlayerModel( entity victim, asset victimAnim )
+{
+    // same as  before, bang/nc sibling execution
+    ItemFlavor bangalore = GetItemFlavorByAsset( $"settings/itemflav/character_skin/bangalore/classic.rpak" )
+    asset mdl = CharacterSkin_GetBodyModel( bangalore )
+    victim.SetModel( mdl )
+    thread PlayAnim( victim, victimAnim )
+}
+
+void function PlayExecutionAnims( entity attack, entity victim, asset atkAnim, asset vicAnim )
+{
+    // looks cleaner
+    thread PlayAnim( attack, atkAnim )
+    thread PlayAnim( victim, vicAnim )
+}
+
+asset function CharacterExecution_GetVictimAnimSeq_S( ItemFlavor execution )
+{
+    // created this so we dont need to deal with the rig weight (light, medium, heavy)
+    return GetGlobalSettingsAsset( ItemFlavor_GetAsset( execution ), "victimMediumAnimSeq" )
+}
+
+bool function IsExecutionMythic( ItemFlavor execution )
+{
+    // had to make this because something changed internally with the way mythic executions were added to the game
+    asset flavAsset = ItemFlavor_GetAsset( execution )
+    if ( ItemFlavor_GetQualityString( flavAsset ) == "MYTHIC" )
+        return true
+
+    return false // return false
+}
+
+void function WaitWithSounds()
+{
+    // pointless, but adds to UX
+    EmitUISound( "UI_Menu_MOTD_Tab" )
+    wait 1
+    EmitUISound( "UI_Menu_MOTD_Tab" )
+    wait 1
+    EmitUISound( "UI_Menu_MOTD_Tab" )
+    wait 1
+    EmitUISound( "UI_Menu_MOTD_Tab" )
+    wait 1
+    EmitUISound( "UI_Menu_MOTD_Tab" )
+    wait 1
+}
+
+void function SpawnDouble() //Front and back model showcase
+{
+    // Hide UI
+    RunUIScript( "ToggleUI_Characters", null )
+
+    // Define the ItemFlavor and asset from the file struct
+    ItemFlavor flav = GetItemFlavorByAsset( file.legendSkin )
+    asset model = CharacterSkin_GetBodyModel( flav )
+
+    // Create front/back models
+    entity front = CreateClientSidePropDynamic( <5085, 146, 7>,  <0, -70, 0>, model )
+    front.SetModelScale( 1.2 )
+    front.Anim_Play( "ACT_MP_MENU_LOBBY_SELECT_IDLE" )
+
+    entity back = CreateClientSidePropDynamic( <5159, 146, 7>,  <0, -270, 0>, model )
+    back.SetModelScale( 1.2 )
+    back.Anim_Play( "ACT_MP_MENU_LOBBY_SELECT_IDLE" )
+
+    // Set the skin via file struct
+    front.SetSkin( file.skinIndex )
+    back.SetSkin( file.skinIndex )
+
+    // Check of the skin should use the recolor or not
+    if ( file.skinIndex == 0 )
+    {
+        CharacterSkin_Apply( front, flav )
+        CharacterSkin_Apply( back, flav )
+    }
+
+    // Create camera otherwise CHARACTER_SELECT model will be in our way
+    entity camera = CreateClientSidePointCamera( <5120.02, 0, 56.3>, <0, 90, 0>, 50 )
+    entity player = GetLocalClientPlayer()
+    player.SetMenuCameraEntity( camera )
+
+    // wait for user to take screenshot, reset and delete after
+    wait 4
+    front.Destroy()
+    back.Destroy()
+    camera.Destroy()
+    SetPresentationType( player, ePresentationType.CHARACTER_SELECT, false )
+    RunUIScript( "ShowHud", 1 )
+}
+
+void function CharacterPOV()
+{
+    // Hide UI
+    entity player = GetLocalClientPlayer()
+    RunUIScript( "ToggleUI_Store", null )
+
+    // Spawn body model so we can show the viewer the original skins hands
+    UpdateClientLightRig( CharacterSkin_GetCharacterFlavor( GetItemFlavorByAsset( file.legendSkin ) ), GetItemFlavorByAsset( file.legendSkin ) )
+    entity baseMdl = CreateClientSidePropDynamic( <8064, -7550, -8130>, <0, 90, 0>, CharacterSkin_GetBodyModel( GetItemFlavorByAsset( file.legendSkin ) ) )
+    baseMdl.SetSkin( baseMdl.GetSkinIndexByName( CharacterSkin_GetSkinName( GetItemFlavorByAsset( file.legendSkin ) ) ) )
+    baseMdl.Anim_Play( "ACT_MP_MENU_LOBBY_SELECT_IDLE" )
+
+    // Load model, we need to have it in the view
+    entity loaderCam = CreateClientSidePointCamera( <8064, -7490, -8080>, <0, -90, 0>, 70)
+    player.SetMenuCameraEntity( loaderCam )
+
+    // Define and create POV model from file struct data
+    ItemFlavor skinFlav = GetItemFlavorByAsset( file.legendSkin )
+    asset armsModel = CharacterSkin_GetArmsModel( skinFlav )
+    entity charModel = CreateClientSidePropDynamic( <18064, -7550, -8130>, <-12.5, 90, 0>, armsModel ) // Create model
+
+    charModel.SetSkin( file.skinIndex )
+
+    // Check if skin should be reset
+    if ( file.skinIndex == 0 )
+    {
+        // idk why i did it like this, instead use CharacterSkin_Apply(entity,ItemFlavor)
+        string skinName = CharacterSkin_GetSkinName( skinFlav )
+        charModel.SetSkin( charModel.GetSkinIndexByName( skinName ) )
+    }
+
+    // Create camera
+    entity camera = CreateClientSidePointCamera( <0, 0, 0>, <0, 0, 0>, 80 )
+
+    // parent to legend model
+    camera.SetParent( charModel, "camera", false, 0 )
+
+    wait 2 // give game time to load model
+    charModel.SetOrigin( <8064, -7550, -8130> )
+    baseMdl.Destroy()
+    thread DeleteLightEnts()
+    WaitFrame()
+    player.SetMenuCameraEntityWithAudio( camera )
+    charModel.Anim_Play( $"animseq/weapons/arms/pov_mp_core/ptpov_haunt_trap_remove.rseq" )
+
+    wait 7
+    loaderCam.Destroy()
+    charModel.Destroy()
+    camera.Destroy()
+    SetPresentationType( player, ePresentationType.STORE_INSPECT, false )
+    RunUIScript( "ShowHud", 2 )
+}
+
+void function StartSkydiveFXOnPlayer()
+{
+    // quickly made this when mythic divetrails were leaked, not going to comment this but small parts such as FX are ripped from sh_loot_ceremony
+    asset emp = $"mdl/dev/empty_model.rmdl"
+    ItemFlavor skin = GetItemFlavorByAsset( file.legendSkin )
+    entity model = CreateClientSidePropDynamic( <8064, -7590, -8100>, <0, 90, 0>, emp )
+    entity camera = CreateClientSidePointCamera( <0, 0, 0>, <0, 0, 0>, 90 )
+    entity camMover = CreateClientsideScriptMover( emp, <7975, -7645, -8043>, <9, 30, 0> )
+    entity plMover = CreateClientsideScriptMover( emp, <8064, -7590, -8100>, <0, 90, 0> )
+    camera.SetParent( camMover, "ref", false, 0 )
+    model.SetParent( plMover, "ref", false, 0 )
+    entity player = GetLocalClientPlayer()
+    player.SetMenuCameraEntity( camera )
+
+    vector org
+    vector ang
+
+    array<string> attachPoints = [
+        "vent_center",
+        "vent_left", // got these from memory, also possible when exporting model in RMDL with a hex editor
+        "vent_right"
+    ]
+    int fxI
+    int index
+    //fxI
+
+    if ( file.skinIndex == 0 )
+        CharacterSkin_Apply( model, skin )
+    else
+        CharacterSkin_GetBodyModel( skin )
+        model.SetSkin( file.skinIndex )
+
+    model.Anim_Play( "ACT_MP_FREEFALL" )
+
+    foreach ( string point in attachPoints )
+    {
+        index = model.LookupAttachment( point )
+        org = model.GetAttachmentOrigin( index )
+        ang = model.GetAttachmentAngles( index )
+
+        fxI = StartParticleEffectInWorldWithHandle( GetParticleSystemIndex( GetTrailForPoint( point ) ), org, ang )
+    }
+    wait 2
+    plMover.NonPhysicsMoveTo( <8064, -7290, -8100>, 1, 0, 0 )
+    camMover.NonPhysicsMoveTo( <7975, -7345, -8043>, 1, 0, 0 )
+}
+
+void function WeaponPOV( int presentation )
+{
+    RunUIScript( "ToggleUI_Store", null )
+    ResetDoF()
+    entity weaponModel
+    entity charmHost
+    entity camera
+    entity scriptMover1
+    entity scriptMover2
+    entity player = GetLocalClientPlayer()
+    if ( presentation == 1 )
+    {
+        ItemFlavor skin = GetItemFlavorByAsset( file.weaponFlav )
+        ItemFlavor flav = WeaponSkin_GetWeaponFlavor( skin )
+
+        weaponModel = CreateClientSidePropDynamic( <8064, -7550, -8064>, <12.5, 90, 0>, $"mdl/dev/empty_model.rmdl" ) //<8064, -7550, -8064>, <12.5, 90, 0> // <0, 700, 50>, <12.5, 105, 0>
+        scriptMover1 = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", weaponModel.GetOrigin(), weaponModel.GetAngles() )
+        scriptMover2 = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", weaponModel.GetOrigin(), weaponModel.GetAngles() )
+
+        WeaponCosmetics_Apply( weaponModel, skin, null )
+
+        if ( file.skinIndex > 0 )
+            weaponModel.SetSkin( file.skinIndex )
+
+        camera = CreateClientSidePointCamera( <0, 0, 0>, <0, 0, 0>, 62.5 )
+        player.SetMenuCameraEntityWithAudio( camera )
+
+
+        scriptMover2.SetParent( weaponModel, "camera", false, 0 )
+        weaponModel.SetParent( scriptMover1, "ref", false, 0 )
+        camera.SetParent( scriptMover2, "ref", false, 0 )
+
+       bool isReactive = WeaponSkin_DoesReactToKills( skin )
+	   if ( isReactive )
+		    MenuWeaponModel_ApplyReactiveSkinBodyGroup( skin, flav, weaponModel )
+	    else
+	    ShowDefaultBodygroupsOnFakeWeapon( weaponModel, WeaponItemFlavor_GetClassname( flav ) )
+
+	    MenuWeaponModel_ClearReactiveEffects( weaponModel )
+	    if ( isReactive )
+		    MenuWeaponModel_StartReactiveEffects( weaponModel, skin )
+
+        wait 1.5
+        weaponModel.Anim_Play( "ACT_VM_DRAWFIRST" ) 
+        WaittillAnimDone( weaponModel )
+        weaponModel.Anim_Play( "ACT_VM_WEAPON_INSPECT" )
+        WaittillAnimDone( weaponModel )
+        weaponModel.Anim_Play( "ACT_VM_RELOADEMPTY" )
+        WaittillAnimDone( weaponModel )
+        weaponModel.Anim_Play( "ads_in" )
+        camera.SetTargetFOV( 45, true, EASING_CUBIC_INOUT, 0.2 )
+        //camera.SetOrigin( camera.GetOrigin() + <0, 0, 0.3> )
+        scriptMover1.NonPhysicsRotateTo( <0, 90, 0>, 0.1, 0,0 )
+
+        WaittillAnimDone( weaponModel )
+        wait 2.5
+        weaponModel.Destroy()
+        camera.Destroy()
+        SetPresentationType( player, ePresentationType.STORE_INSPECT, false )
+        RunUIScript( "ShowHud", 2 )
+    }
+
+    if ( presentation == 2 )
+    {
+        ItemFlavor weapon = GetItemFlavorByAsset( $"settings/itemflav/weapon_skin/alternator/factory_issue.rpak" ) 
+        ItemFlavor flavor = WeaponSkin_GetWeaponFlavor( weapon )
+        charmHost = CreateClientSidePropDynamic( <8064, -7550, -8064>, <12.5, 90, 0>, $"mdl/dev/empty_model.rmdl" )
+        scriptMover1 = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", charmHost.GetOrigin(), charmHost.GetAngles() )
+        scriptMover2 = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", charmHost.GetOrigin(), charmHost.GetAngles() )
+
+        WeaponCosmetics_Apply( charmHost, weapon, null )
+
+        if ( file.charmAsset != $"" )
+        {
+            ItemFlavor charm  = GetItemFlavorByAsset( file.charmAsset )
+            WeaponCosmetics_Apply( charmHost, weapon, charm )
+        }
+
+        charmHost.SetSkin( charmHost.GetSkinIndexByName( "charm_preview_black" ) )
+        ShowDefaultBodygroupsOnFakeWeapon( charmHost, WeaponItemFlavor_GetClassname( flavor ) )
+
+        camera = CreateClientSidePointCamera( <0, 0, 0>, <0, 0, 0>, 52.5 )
+        player.SetMenuCameraEntity( camera )
+        scriptMover2.SetParent( charmHost, "camera", false, 0 )
+        charmHost.SetParent( scriptMover1, "ref", false, 0 )
+        camera.SetParent( scriptMover2, "ref", false, 0 )
+
+        wait 1.5
+        charmHost.Anim_Play( "ACT_VM_WEAPON_INSPECT" )
+        WaittillAnimDone( charmHost )
+        charmHost.Anim_Play( "ads_in" )
+        camera.SetTargetFOV( 38, true, EASING_CUBIC_INOUT, 0.2 )
+        scriptMover1.NonPhysicsRotateTo( <0, 90, 0>, 0.1, 0,0 )
+
+        WaittillAnimDone( charmHost )
+        wait 3.5
+        charmHost.Destroy()
+        camera.Destroy()
+        SetPresentationType( player, ePresentationType.STORE_INSPECT, false )
+        RunUIScript( "ShowHud", 2 )
+    }
+}
+
+void function LobbyShowcaseThread()
+{
+    thread LobbyShowcase()
+}
+
+void function LobbyShowcase()
+{
+    // Hide HUD upon execution 
+    RunUIScript( "ToggleUI_Characters", null )
+
+    // Define vars
+    entity player       = GetLocalClientPlayer()
+    entity camera
+    vector angles       = <0, -90, 0>
+    ItemFlavor skinFlav = GetItemFlavorByAsset( file.legendSkin )
+    asset mdlPath       = CharacterSkin_GetBodyModel( skinFlav )
+    entity center       = CreateClientSidePropDynamic( <0, 532, 0>, angles, mdlPath )
+    entity left         = CreateClientSidePropDynamic( <-54, 656, 0>, angles, mdlPath ) //teammate1
+    entity right        = CreateClientSidePropDynamic( <54, 656, 0>, angles, mdlPath ) //teammate2
+
+    // Hide Models
+    thread SkinChanger( 999 ) // We use this func so there isnt a need to modify other files too much
+
+    // Set the skin previously defined in the 'file' struct
+    center.SetSkin( file.skinIndex )
+    left.SetSkin( file.skinIndex )
+    right.SetSkin( file.skinIndex )
+
+    // Check if skin should use skinIndex struct
+    if ( file.skinIndex == 0 )
+    {
+        CharacterSkin_Apply( center, skinFlav )
+        CharacterSkin_Apply( left, skinFlav )
+        CharacterSkin_Apply( right, skinFlav )
+    }
+
+    // Give the spawned models their lobby animations
+    center.Anim_Play( "ACT_MP_MENU_LOBBY_CENTER_IDLE" )
+    left.Anim_Play( "ACT_MP_MENU_LOBBY_LEFT_IDLE" )
+    right.Anim_Play( "ACT_MP_MENU_LOBBY_RIGHT_IDLE" )
+
+    // Model scale
+    center.SetModelScale( 1.15 )
+    right.SetModelScale( 1 )
+    left.SetModelScale( 1 )
+
+    // Set camera
+    SetPresentationType( player, ePresentationType.PLAY, false )
+
+    // Apply depth of field settings
+    ResetDoF()
+    
+    // Switch presentation type back
+    wait 5
+    center.Destroy()
+    left.Destroy()
+    right.Destroy()
+    SetPresentationType( player, ePresentationType.CHARACTER_SELECT, false )
+    RunUIScript( "ShowHud", 1 )
+}
+
+void function CheckIfSkinIsInRange( entity model, int greaterOrLess )
+{
+    if ( greaterOrLess == 1 ) // Prevent skin index from exceding count
+    {
+        if ( model.GetSkin() > model.GetSkinCount() -1 )
+		{
+			model.SetSkin( model.GetSkinCount() -1 )
+		}
+    }
+
+    if ( greaterOrLess == 2 ) // Prevent skin index from going below count
+    {
+        if ( model.GetSkin() < 0 )
+		{
+			model.SetSkin( 0 )
+		}
+    }
+}
+
+bool function CheckIfCamoIsValid( int camo, int checkType ) // false = under // true = over
+{
+    if ( checkType == 1 ) // Prevent camo index from exceding count
+        {
+            if ( camo > CAMO_SKIN_COUNT -1 )
+		    {
+			    // model.SetCamo( CAMO_SKIN_COUNT -1 )
+                return true
+		    }
+        }
+
+        if ( camo == 2 ) // Prevent camo index from going below count
+        {
+            if ( camo < 0 )
+		    {
+			    // model.SetCamo( 0 )
+                return false
+		    }
+    }
+    return false
+}
+
+void function CheckForRareMask(entity model) // Get the rare mask for the "model" param.
+{
+    if ( model.GetSkinIndexByName( "rare mask" ) == -1 )
+				model.SetSkin( model.GetSkinIndexByName( "common/rare mask" ) )
+
+	if ( model.GetSkinIndexByName( "common/rare mask" ) == -1 )
+				model.SetSkin( model.GetSkinIndexByName( "rare mask" ) )
+}
+
+string function ItemFlavor_GetQualityString( asset flav )
+{
+    return GetGlobalSettingsString( flav, "quality" )
+}
+
+void function UnlockWeaponRotation(int check, float v1, float v2)
+{
+    if ( check == ePresentationType.WEAPON_SKIN )
+    {
+        v1 = 360
+        v2 = 360
+    }
+}
+
+void function UpdateClientLightRig( ItemFlavor character, ItemFlavor characterSkin )
+{
+    int correction = ColorCorrection_Register( "materials/correction/menu.raw_hdr" )
+    string LIGHT_KEY    = "char_sel_light_key"
+    string LIGHT_FILL   = "char_sel_light_fill"
+    string LIGHT_RIML   = "char_sel_light_rim_l"
+    string LIGHT_RIMR   = "char_sel_light_rim_r"
+
+    file.keyLight = GetEntByScriptName( LIGHT_KEY )
+	file.keyLight.SetTweakLightRealtimeShadows( true )
+	file.keyLight.SetTweakLightUpdateShadowsEveryFrame( true )
+
+	file.fillLight = GetEntByScriptName( LIGHT_FILL )
+	file.fillLight.SetTweakLightRealtimeShadows( true )
+	file.fillLight.SetTweakLightUpdateShadowsEveryFrame( true )
+
+	file.rimLightL = GetEntByScriptName( LIGHT_RIML )
+	file.rimLightL.SetTweakLightRealtimeShadows( true )
+	file.rimLightL.SetTweakLightUpdateShadowsEveryFrame( true )
+
+	file.rimLightR = GetEntByScriptName( LIGHT_RIMR )
+	file.rimLightR.SetTweakLightRealtimeShadows( true )
+	file.rimLightR.SetTweakLightUpdateShadowsEveryFrame( true )
+
+	CharacterMenuLightData lightData
+	if ( CharacterSkin_HasMenuCustomLighting( characterSkin ) )
+	{
+		lightData = CharacterSkin_GetMenuCustomLightData( characterSkin )
+	}
+	else
+	{
+		lightData = CharacterClass_GetMenuLightData( character )
+	}
+        
+	file.keyLight.SetTweakLightColor( lightData.key_color )
+	file.keyLight.SetTweakLightBrightness( lightData.key_brightness )
+	file.keyLight.SetTweakLightCone( lightData.key_cone )
+	file.keyLight.SetTweakLightInnerCone ( lightData.key_innercone )
+	file.keyLight.SetTweakLightDistance( lightData.key_distance )
+	file.keyLight.SetTweakLightHalfBrightFrac( lightData.key_halfbrightfrac )
+	file.keyLight.SetTweakLightSpecIntensity( lightData.key_specint )
+	file.keyLight.SetTweakLightPBRFalloff( lightData.key_pbrfalloff )
+	file.keyLight.SetTweakLightRealtimeShadows( lightData.key_castshadows )
+	file.fillLight.SetTweakLightColor( lightData.fill_color )
+	file.fillLight.SetTweakLightBrightness( lightData.key_brightness )
+	file.fillLight.SetTweakLightCone( lightData.fill_cone )
+	file.fillLight.SetTweakLightInnerCone ( lightData.fill_innercone )
+	file.fillLight.SetTweakLightDistance( lightData.fill_distance )
+	file.fillLight.SetTweakLightHalfBrightFrac( lightData.fill_halfbrightfrac )
+	file.fillLight.SetTweakLightSpecIntensity( lightData.fill_specint )
+	file.fillLight.SetTweakLightPBRFalloff( lightData.fill_pbrfalloff )
+	file.fillLight.SetTweakLightRealtimeShadows( lightData.fill_castshadows )
+	file.rimLightL.SetTweakLightColor( lightData.rimL_color )
+	file.rimLightL.SetTweakLightBrightness( lightData.key_brightness )
+	file.rimLightL.SetTweakLightCone( lightData.rimL_cone )
+	file.rimLightL.SetTweakLightInnerCone ( lightData.rimL_innercone )
+	file.rimLightL.SetTweakLightDistance( lightData.rimL_distance )
+	file.rimLightL.SetTweakLightHalfBrightFrac( lightData.rimL_halfbrightfrac )
+	file.rimLightL.SetTweakLightSpecIntensity( lightData.rimL_specint )
+	file.rimLightL.SetTweakLightPBRFalloff( lightData.rimL_pbrfalloff )
+	file.rimLightL.SetTweakLightRealtimeShadows( lightData.rimL_castshadows )
+	file.rimLightR.SetTweakLightColor( lightData.rimR_color )
+	file.rimLightR.SetTweakLightBrightness( lightData.key_brightness )
+	file.rimLightR.SetTweakLightCone( lightData.rimR_cone )
+	file.rimLightR.SetTweakLightInnerCone ( lightData.rimR_innercone )
+	file.rimLightR.SetTweakLightDistance( lightData.rimR_distance )
+	file.rimLightR.SetTweakLightHalfBrightFrac( lightData.rimR_halfbrightfrac )
+	file.rimLightR.SetTweakLightSpecIntensity( lightData.rimR_specint )
+	file.rimLightR.SetTweakLightPBRFalloff( lightData.rimR_pbrfalloff )
+	file.rimLightR.SetTweakLightRealtimeShadows( lightData.rimR_castshadows )
+
+	entity lightRigModel = CreateClientSidePropDynamic( <8064, -7430, -8128>, <0, 90, 0>, $"mdl/empty/lights/empty_lights.rmdl" )  
+	lightRigModel.Anim_Play( lightData.animSeq )
+	int attachIdx_fill = lightRigModel.LookupAttachment( "LIGHT_1" )
+	int attachIdx_rimL = lightRigModel.LookupAttachment( "LIGHT_2" )
+	int attachIdx_rimR = lightRigModel.LookupAttachment( "LIGHT_3" )
+	int attachIdx_key = lightRigModel.LookupAttachment( "LIGHT_4" )
+
+	file.fillLight.SetTweakLightOrigin( lightRigModel.GetAttachmentOrigin( attachIdx_fill ) )
+	file.fillLight.SetTweakLightAngles( lightRigModel.GetAttachmentAngles( attachIdx_fill ) )
+
+	file.rimLightL.SetTweakLightOrigin( lightRigModel.GetAttachmentOrigin( attachIdx_rimL ) )
+	file.rimLightL.SetTweakLightAngles( lightRigModel.GetAttachmentAngles( attachIdx_rimL ) )
+
+	file.rimLightR.SetTweakLightOrigin( lightRigModel.GetAttachmentOrigin( attachIdx_rimR ) )
+	file.rimLightR.SetTweakLightAngles( lightRigModel.GetAttachmentAngles( attachIdx_rimR ) )
+
+	file.keyLight.SetTweakLightOrigin( lightRigModel.GetAttachmentOrigin( attachIdx_key ) )
+	file.keyLight.SetTweakLightAngles( lightRigModel.GetAttachmentAngles( attachIdx_key ) )
+}
+
+void function DeleteLightEnts()
+{
+    file.keyLight.SetOrigin( <0,0,0> )
+    file.fillLight.SetOrigin( <0,0,0> )
+    file.rimLightL.SetOrigin( <0,0,0> )
+    file.rimLightR.SetOrigin( <0,0,0> )
+}
+
+void function ResetDoF()
+{
+    // DoF_SetFarDepthToDefault()
+    // DoF_SetNearDepthToDefault()
+    DoF_SetFarDepth(0,0)
+    DoF_SetNearDepth(0,0)
+}
+
+void function ResetPosThread( entity attacker, entity victim )
+{
+    vector origin = <8034, -7550, -8128>
+    vector angles = <0, 180, 0>
+
+    attacker.SetOrigin( origin )
+    victim.SetOrigin( origin )
+    attacker.SetAngles( angles )
+    victim.SetAngles( angles )
+}
+
+// i dont use any of this, its broken and i only used to test when experimenting with camo index switching
+
+var function GetSkin_AndPrintName( int skin, bool print )
+{
+    var rui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
+    if ( print == true )
+    {        
+        RuiSetBool( rui, "compactTitles", true )
+        RuiSetString( rui, "gameModeString", "\n\n\n\n\n                                              Camo Index:      " + skin.tostring() )
+    }
+
+    return rui
+}
+
+void function UpdateDebugRui( var rui, int skin )
+{
+    RuiDestroyIfAlive( rui )
+    var newRui = CreateFullscreenPostFXRui( $"ui/round_end_squads_border.rpak", 3 )
+    RuiSetBool( newRui, "compactTitles", true )
+    RuiSetString( newRui, "gameModeString", "\n\n\n\n\n                                              Camo Index:      " + skin.tostring() )
+}
+
+void function CheckCamoIndex( int next, entity model, string check )
+{
+    if ( check == "next" )
+    {
+	    if ( next > CAMO_SKIN_COUNT )
+		    model.SetCamo( CAMO_SKIN_COUNT )
+				
+	    if ( next < CAMO_SKIN_COUNT )
+		    model.SetCamo( next )
+    }
+
+    if ( check == "prev" )
+    {
+        if ( next == -1 )
+            model.SetCamo( 0 )
+
+        if ( next > -1 )
+            model.SetCamo( next )
+    }
+}
+
+// similar to the Dive FX func, just a model with an animation + camera. Cool angle i guess
+void function DiveEmote()
+{
+    entity camPos = GetEntByScriptName( "target_loot_ceremony_ref" )
+
+    entity diver = CreateClientSidePropDynamic( <8064, -7590, -8100>, <0, 90, 0>, $"mdl/techart/mshop/characters/legends/catalyst/catalyst_base_w.rmdl" ) // back pos: <8064, -7720, -8027>, <5, 90, 0>
+    entity mover     = CreateClientSidePropDynamic( <7975, -7645, -8043>, <-5, 30, 0>, $"mdl/dev/empty_model.rmdl" ) // "front side" mover position <7975, -7645, -8043>, <8, 30, 0>
+    diver.SetSkin(0)
+
+    entity player = GetLocalClientPlayer()
+	float fov = 90
+	entity menuCamera = CreateClientSidePointCamera( camPos.GetOrigin(), camPos.GetAngles(), fov )
+	player.SetMenuCameraEntityWithAudio(menuCamera) 
+    menuCamera.SetParent(mover, "ref", false, 0)
+ 
+    diver.Anim_Play( "catalyst_freefall_emote_teatime" )
+}
+
+// this is really bad
+asset function GetTrailForPoint( string attachment )
+{
+    asset center = $"P_skydive_rank_chrg_2"
+    asset left   = $"P_skydive_jumpjet_land_rank"
+    asset right  = $"P_skydive_jumpjet_land_rank"
+    asset effect
+
+    switch ( attachment )
+    {
+        case "vent_center":
+            effect = center
+            break
+
+        case "vent_left":
+            effect = left
+            break
+
+        case "vent_right":
+            effect = right
+            break
+
+        default:
+            effect = $""
+            break
+    }
+
+    return effect
+}
+
+// idk
+asset function ShouldSkinBeRandom( bool boolean, array<ItemFlavor> refs )
+{
+    if ( boolean == true )
+        return ItemFlavor_GetAsset( refs.getrandom() )
+    if ( boolean == false )
+        return file.legendSkin
+    return $""
+}
+
+// used so we dont get SpinOff() error, function that use any form of "wait" cant be called in the UI VM
+void function BeginFinisher()
+{
+    thread StartExecutionInLobby()
+}
+
+void function CharSelectThread()
+{
+    thread CharSelectV2()
+}
+
+void function CharacterPOVThread()
+{
+    thread CharacterPOV()
+}
+
+void function WeaponPOVThread()
+{
+    if ( file.charmAsset != $"" )
+        thread WeaponPOV( 2 )
+    
+    else
+        thread WeaponPOV( 1 )  
+}
+
+void function ShowSkinInfoThread()
+{
+    thread GetSkinInfo( true )
+}
+
+void function SpawnDoubleThread()
+{
+    thread SpawnDouble()
+}
+
+void function WeaponSkinIdxUp()
+{
+    thread SkinChanger( 1 )
+}
+
+void function WeaponSkinIdxDown()
+{
+    thread SkinChanger( 2 )
+}
+
+void function WeaponSkin_GetNewestSkin()
+{
+    thread SkinChanger( 3 )
+}
+
+void function CharacterSkinIdxUp()
+{
+    thread SkinChanger( 4 )
+}
+
+void function CharacterSkinIdxDown()
+{
+    thread SkinChanger( 5 )
+}
+
+void function CharacterSkin_GetNewestSkin()
+{
+    thread SkinChanger( 6 )
+}
+
+void function CharacterSkin_CamoDown()
+{
+    thread SkinChanger(100)
+}
+
+void function CharacterSkin_CamoUp()
+{
+    thread SkinChanger(101)
+}
+
+void function WeaponSkin_CamoDown()
+{
+    thread SkinChanger(102)
+}
+
+void function WeaponSkin_CamoUp()
+{
+    thread SkinChanger(103)
+}
+
+
+void function DubugMessage()
+{
+    thread ShowDebugMessage()
+}
+
+void function CharacterSkin_SetCamo()
+{
+    thread SkinChanger( 7 )
+}
+
+void function WeaponSkin_SetCamo()
+{
+    thread SkinChanger( 8 )
+}
+
+void function SkydiveFX_Thread()
+{
+    thread StartSkydiveFXOnPlayer()
+}
+
+// i only have this so i dont have to dig around for my old settings, place in mp/sh_gladiator_cards.nut under "SetNestedGladiatorCardOverrideFrame" func
+// get the rpak stuff from legion
+/*
+	handle.overrideName = "SenosApex on Twitter"
+	handle.overrideCharacter = GetItemFlavorByAsset($"settings/itemflav/character/wraith.rpak")
+	handle.overrideSkin = GetItemFlavorByAsset($"settings/itemflav/character_skin/wraith/mythic_v22_pilot_level03.rpak")
+	handle.overrideStance = GetItemFlavorByAsset($"settings/itemflav/gcard_stance/wraith/heirloom_01.rpak")
+	handle.overrideFrame = GetItemFlavorByAsset($"settings/itemflav/gcard_frame/wraith/legendary_04.rpak")
+
+	handle.overrideBadgeList[0] = GetItemFlavorByAsset($"settings/itemflav/gcard_badge/account/account_level.rpak")
+	handle.overrideBadgeDataIntegerList[0] = 999
+
+	handle.overrideBadgeList[1] = GetItemFlavorByAsset($"settings/itemflav/gcard_badge/account/account_level.rpak")
+	handle.overrideBadgeDataIntegerList[1] = 1499 //dataInteger
+
+	handle.overrideBadgeList[2] = GetItemFlavorByAsset($"settings/itemflav/gcard_badge/account/account_level.rpak")
+	handle.overrideBadgeDataIntegerList[2] = 1999
+
+	handle.overrideTrackerList[0] = GetItemFlavorByAsset($"settings/itemflav/gcard_tracker/wraith/s08ace_career_kills.rpak")
+	handle.overrideTrackerDataIntegerList[0] = 20
+
+	handle.overrideTrackerList[1] = GetItemFlavorByAsset($"settings/itemflav/gcard_tracker/wraith/s08ace_career_wins.rpak")
+	handle.overrideTrackerDataIntegerList[1] = 0
+
+	handle.overrideTrackerList[2] = GetItemFlavorByAsset($"settings/itemflav/gcard_tracker/wraith/s08ace_career_damage_done.rpak")
+	handle.overrideTrackerDataIntegerList[2] = 0
+*/
+#endif
+
+#if UI
+// 
+void function ToggleUI_CharacterSkins( var button )
+{
+    bool hidden = IsMenuVisible( GetMenu( "CustomizeCharacterMenu" ) )
+    if ( hidden == true )
+    {
+        Hud_Hide( GetMenu( "CustomizeCharacterMenu" ) )
+    }
+
+    if ( hidden == false )
+    {
+        Hud_Show( GetMenu( "CustomizeCharacterMenu" ) )
+        ShowGameCursor()
+    }
+}
+
+void function ToggleUI_Characters( var button )
+{
+    bool hidden = IsMenuVisible( GetMenu( "LobbyMenu" ) )
+    if ( hidden == true )
+    {
+        Hud_Hide( GetMenu( "LobbyMenu" ) )
+    }
+
+    if ( hidden == false )
+    {
+        Hud_Show( GetMenu( "LobbyMenu" ) )
+        ShowGameCursor()
+    }
+}
+
+void function ToggleUI_Weapon( var button )
+{
+    bool hidden = IsMenuVisible( GetMenu( "CustomizeWeaponMenu" ) )
+    if ( hidden == true )
+    {
+        Hud_Hide( GetMenu( "CustomizeWeaponMenu" ) )
+    }
+
+    if ( hidden == false )
+    {
+        Hud_Show( GetMenu( "CustomizeWeaponMenu" ) )
+        ShowGameCursor()
+    }
+}
+
+void function ToggleUI_Store( var button )
+{
+    bool hidden = IsMenuVisible( GetMenu( "StoreInspectMenu" ) )
+    if ( hidden == true )
+    {
+        Hud_Hide( GetMenu( "StoreInspectMenu" ) )
+    }
+
+    if ( hidden == false )
+    {
+        Hud_Show( GetMenu( "StoreInspectMenu" ) )
+        ShowGameCursor()
+    }
+}
+
+void function ShowHud( int type )
+{
+    var menu
+    if ( type == 1 )
+    {
+        menu = GetMenu( "LobbyMenu" )
+        if ( IsMenuVisible( menu ) == false )
+        {
+            Hud_Show( menu )
+        }
+    }
+
+    if ( type == 2 )
+    {
+        menu = GetMenu( "StoreInspectMenu" )
+        if ( IsMenuVisible( menu ) == false )
+        {
+            Hud_Show( menu )
+        }
+    }
+}
+
+// Showcase buttons
+void function SpawnDoubleUI(var button)
+{
+	RunClientScript("SpawnDoubleThread")
+}
+
+void function ExecutionShowcaseUI( var button )
+{
+	RunClientScript("BeginFinisher")
+}
+
+void function DiveEmoteUI( var button )
+{
+	RunClientScript( "DiveEmote" )
+}
+
+void function CharSelectV2UI( var button )
+{
+	RunClientScript( "CharSelectThread" )
+}
+
+void function CharacterPOVUI( var button )
+{
+	RunClientScript( "CharacterPOVThread" )
+}
+
+void function WeaponPOVUI( var button )
+{
+	RunClientScript( "WeaponPOVThread" )
+}
+
+void function ShowSkinInfoUI( var button )
+{
+	RunClientScript( "ShowSkinInfoThread" )
+}
+
+void function SkydiveFX_UI( var v )
+{
+    RunClientScript( "SkydiveFX_Thread" )
+}
+
+void function WSkinUP_UI( var button )
+{
+	RunClientScript( "WeaponSkinIdxUp" )
+}
+
+void function WSkinDOWN_UI( var button )
+{
+	RunClientScript( "WeaponSkinIdxDown" )
+}
+
+void function WNewestSkin_UI( var button )
+{
+	RunClientScript( "WeaponSkin_GetNewestSkin" )
+}
+
+void function WCamo_Apply_UI( var _ )
+{
+    RunClientScript( "WeaponSkin_SetCamo" )
+}
+
+void function CSkinUP_UI( var button )
+{
+	RunClientScript( "CharacterSkinIdxUp" )
+}
+
+void function CSkinDOWN_UI( var button )
+{
+	RunClientScript( "CharacterSkinIdxDown" )
+}
+
+void function CNewestSkin_UI( var button )
+{
+	RunClientScript( "CharacterSkin_GetNewestSkin" )
+}
+
+void function CCamo_Apply_UI( var _ )
+{
+    RunClientScript( "CharacterSkin_SetCamo" )
+}
+
+void function CCamo_Down_UI( var _ )
+{
+    RunClientScript( "CharacterSkin_CamoDown" )
+}
+
+void function WCamo_Up_UI( var _ )
+{
+    RunClientScript( "WeaponSkin_CamoUp" )
+}
+void function WCamo_Down_UI( var _ )
+{
+    RunClientScript( "WeaponSkin_CamoDown" )
+}
+void function CCamo_Up_UI( var _ )
+{
+    RunClientScript( "CharacterSkin_CamoUp" )
+}
+
+void function LobbyShowcaseUI( var button )
+{
+    RunClientScript( "LobbyShowcaseThread" )
+}
+
+void function LaunchDebugMessage( var _ )
+{
+    RunClientScript( "DubugMessage" )
+}
+
+void function SendDebugMessage( string hdr, string msg )
+{
+    EmitUISound( "menu_deny" )
+    CloseAllDialogs()
+    
+    ConfirmDialogData data
+    data.headerText = hdr
+    data.messageText = msg
+    data.contextImage = $"ui/menu/common/dialog_error"
+
+    OpenOKDialogFromData( data )
+}
+
+// ADD TO YOUR LAUNCH OPTIONS!!!
+// i only add this so i could quickly take screenshots without the buttons
+// theres probably better way to do this
+int function IsCommandPassed()
+{
+    int CVAR_ADD_MENU_BUTTONS
+    if ( Dev_CommandLineHasParm( "-addMenuButtons" ) )
+    {
+        CVAR_ADD_MENU_BUTTONS = 1
+    }
+
+    else
+    {
+        CVAR_ADD_MENU_BUTTONS = 0
+    }
+    return CVAR_ADD_MENU_BUTTONS
+}
+
+void function OpenGiftUI( var button )
+{
+    #if CLIENT || UI
+    BattlePassReward gift1
+    gift1.flav = GetItemFlavorByAsset( $"settings/itemflav/character_skin/ash/epicp_v22_magicwitch.rpak" )
+    gift1.quantity = 1
+    gift1.level = 0
+    gift1.isPremium = false
+    gift1.isEventReward = true
+    gift1.eventName = ""
+
+    array <BattlePassReward> gifts = [gift1]
+    #endif
+    
+    AdvanceMenu( GetMenu( "LobbyMenu" ) )
+    CloseActiveMenu()
+
+    ShowRewardCeremonyDialog( 
+    "", 
+    Localize("Rewards Received!"), 
+    Localize("Here is a free scrapped cosmetic from the Unshackled Thematic Event!\nconcept - senosapex"), 
+    gifts, 
+    false, 
+    false, 
+    false, 
+    true )
+}
+#endif
